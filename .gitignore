@@ -5,3 +5,6 @@ dist-electron
 release
 scratch
 *.log
+*.rar
+*.zip
+AI Quota Monitor*
