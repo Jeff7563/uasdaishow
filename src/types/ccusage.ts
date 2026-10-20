@@ -83,6 +83,7 @@ export interface LimitRemaining {
   resetCountdown: string;   // e.g. "Resets in 3h 50m"
   resetTimeDisplay: string; // e.g. "Today 18:00" or "Resets Sun 4:00 AM"
   status: 'normal' | 'warning' | 'critical';
+  isUtilizationMode?: boolean;
 }
 
 export interface ProviderQuota {
@@ -102,6 +103,7 @@ export interface WidgetData {
   totalActiveTokens: number;
   sessionLoadPercent: number;
   activeProvidersCount: number;
+  burnRateDisplay?: string; // e.g. "~12k/h"
   providers: {
     claude: ProviderQuota;
     codex: ProviderQuota;

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Bot, Sparkles, Cpu, Clock, Calendar } from 'lucide-react';
-import type { ProviderQuota, LimitRemaining } from '../types/ccusage';
+import { Clock, Calendar, ExternalLink } from 'lucide-react';
+import { ClaudeIcon, OpenAIIcon, GeminiIcon } from './BrandIcons';
+import type { ProviderQuota, LimitRemaining, ProviderId } from '../types/ccusage';
 
 interface ProviderCardProps {
   quota: ProviderQuota;
@@ -8,22 +9,40 @@ interface ProviderCardProps {
 
 const PROVIDER_CONFIG = {
   claude: {
-    icon: Sparkles,
-    badgeColor: 'text-amber-400/90 bg-amber-950/30 border-amber-500/20',
-    barGradient: 'from-amber-500/80 to-amber-600/40',
-    accentBorder: 'border-white/[0.08] hover:border-amber-500/30',
+    icon: ClaudeIcon,
+    iconColor: 'text-[#D97757]',
+    badgeColor: 'text-[#D97757] bg-[#D97757]/15 border-[#D97757]/30',
+    barGradient: 'from-[#D97757] to-[#B8583B]',
+    accentBorder: 'border-white/[0.08] hover:border-[#D97757]/40',
   },
   codex: {
-    icon: Cpu,
-    badgeColor: 'text-emerald-400/90 bg-emerald-950/30 border-emerald-500/20',
-    barGradient: 'from-emerald-400/80 to-emerald-600/40',
-    accentBorder: 'border-white/[0.08] hover:border-emerald-500/30',
+    icon: OpenAIIcon,
+    iconColor: 'text-[#10A37F]',
+    badgeColor: 'text-[#10A37F] bg-[#10A37F]/15 border-[#10A37F]/30',
+    barGradient: 'from-[#10A37F] to-[#0A6B53]',
+    accentBorder: 'border-white/[0.08] hover:border-[#10A37F]/40',
   },
   antigravity: {
-    icon: Bot,
-    badgeColor: 'text-sky-400/90 bg-sky-950/30 border-sky-500/20',
-    barGradient: 'from-sky-400/80 to-sky-600/40',
-    accentBorder: 'border-white/[0.08] hover:border-sky-500/30',
+    icon: GeminiIcon,
+    iconColor: 'text-[#4E82EE]',
+    badgeColor: 'text-[#4E82EE] bg-[#4E82EE]/15 border-[#4E82EE]/30',
+    barGradient: 'from-[#4E82EE] via-[#7C3AED] to-[#A855F7]',
+    accentBorder: 'border-white/[0.08] hover:border-[#4E82EE]/40',
+  },
+};
+
+const PROVIDER_URLS: Record<ProviderId, { url: string; tooltip: string }> = {
+  claude: {
+    url: 'https://claude.ai',
+    tooltip: 'Launch Claude in browser (claude.ai)',
+  },
+  codex: {
+    url: 'https://chatgpt.com',
+    tooltip: 'Launch ChatGPT in browser (chatgpt.com)',
+  },
+  antigravity: {
+    url: 'https://aistudio.google.com',
+    tooltip: 'Launch Google AI Studio in browser (aistudio.google.com)',
   },
 };
 
@@ -49,7 +68,7 @@ const QuotaBar: React.FC<{
 
   return (
     <div className="space-y-1">
-      {/* Label and Remaining % */}
+      {/* Label and Remaining % Display */}
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-slate-300 font-medium tracking-tight">
           {limit.label}
@@ -86,7 +105,19 @@ const QuotaBar: React.FC<{
 
 export const ProviderCard: React.FC<ProviderCardProps> = ({ quota }) => {
   const config = PROVIDER_CONFIG[quota.id] || PROVIDER_CONFIG.claude;
+  const webConfig = PROVIDER_URLS[quota.id];
   const IconComponent = config.icon;
+
+  const handleOpenWeb = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (webConfig?.url) {
+      if (window.electronAPI) {
+        window.electronAPI.openExternal(webConfig.url);
+      } else {
+        window.open(webConfig.url, '_blank');
+      }
+    }
+  };
 
   return (
     <div
@@ -95,6 +126,7 @@ export const ProviderCard: React.FC<ProviderCardProps> = ({ quota }) => {
       {/* Provider Header in Segmented Pill Style */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {/* Authentic Brand Logo Badge */}
           <div className={`p-1.5 rounded-full border ${config.badgeColor}`}>
             <IconComponent className="w-3.5 h-3.5" />
           </div>
@@ -108,25 +140,36 @@ export const ProviderCard: React.FC<ProviderCardProps> = ({ quota }) => {
           </div>
         </div>
 
-        {/* Model Tag Pill */}
-        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#161926] border border-white/[0.06]">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
-          <span className="text-[10px] font-mono text-slate-300 truncate max-w-[110px]">
-            {quota.models[0]?.replace(/^claude-|^gpt-|^gemini-/, '') || 'Active'}
-          </span>
+        {/* Right side: Model Tag Pill & Quick Web Launcher Button */}
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#161926] border border-white/[0.06]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
+            <span className="text-[10px] font-mono text-slate-300 truncate max-w-[95px]">
+              {quota.models[0]?.replace(/^claude-|^gpt-|^gemini-/, '') || 'Active'}
+            </span>
+          </div>
+
+          {/* Quick Web Launcher Button */}
+          <button
+            onClick={handleOpenWeb}
+            title={webConfig?.tooltip || `Open ${quota.name} Web UI`}
+            className="p-1 rounded-lg text-slate-500 hover:text-indigo-300 hover:bg-white/[0.08] border border-transparent hover:border-white/[0.08] transition-colors no-drag cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
       {/* Two Primary Progress Bars */}
       <div className="space-y-2 pt-1 border-t border-white/[0.04]">
-        {/* 1. 5-Hour / Session Limit Remaining */}
+        {/* 1. 5-Hour / Session Limit */}
         <QuotaBar
           limit={quota.sessionLimit}
           icon={Clock}
           gradientClass={config.barGradient}
         />
 
-        {/* 2. Weekly Limit Remaining */}
+        {/* 2. Weekly Limit */}
         <QuotaBar
           limit={quota.weeklyLimit}
           icon={Calendar}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Activity, Clock } from 'lucide-react';
+import { Layers, Activity, Clock, Zap } from 'lucide-react';
 import { formatTokens } from '../utils/formatters';
 
 interface SummaryPillProps {
@@ -8,6 +8,7 @@ interface SummaryPillProps {
   activeProvidersCount: number;
   lastSyncTimestamp: number;
   isWatcherActive: boolean;
+  burnRateDisplay?: string;
 }
 
 export const SummaryPill: React.FC<SummaryPillProps> = ({
@@ -16,6 +17,7 @@ export const SummaryPill: React.FC<SummaryPillProps> = ({
   activeProvidersCount,
   lastSyncTimestamp,
   isWatcherActive,
+  burnRateDisplay = 'Idle',
 }) => {
   const [secondsAgo, setSecondsAgo] = useState(0);
 
@@ -37,17 +39,32 @@ export const SummaryPill: React.FC<SummaryPillProps> = ({
     return `${min}m ago`;
   };
 
+  const isBurning = burnRateDisplay && burnRateDisplay !== 'Idle' && !burnRateDisplay.includes('~0');
+
   return (
     <div className="bg-[#141724]/90 border border-white/[0.08] rounded-2xl p-2 shadow-lg backdrop-blur-xl select-none">
       <div className="grid grid-cols-3 divide-x divide-white/[0.06] text-center">
-        {/* Metric 1: Total Active Tokens / Session Load */}
-        <div className="px-1.5 flex flex-col items-center justify-center">
+        {/* Metric 1: Total Active Tokens & Burn Velocity */}
+        <div
+          className="px-1.5 flex flex-col items-center justify-center"
+          title={`Session tokens: ${totalActiveTokens.toLocaleString()} | Burn Rate: ${burnRateDisplay}`}
+        >
           <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
             <Layers className="w-3 h-3 text-indigo-400" />
             <span>Session</span>
           </div>
           <div className="font-mono text-[11px] font-semibold text-slate-200 mt-0.5">
             {totalActiveTokens > 0 ? formatTokens(totalActiveTokens) : `${sessionLoadPercent}%`}
+          </div>
+          <div className="flex items-center gap-0.5 text-[9px] font-mono mt-0.5">
+            {isBurning ? (
+              <>
+                <Zap className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                <span className="text-amber-300 font-medium">{burnRateDisplay}</span>
+              </>
+            ) : (
+              <span className="text-slate-500">Idle</span>
+            )}
           </div>
         </div>
 
@@ -61,6 +78,9 @@ export const SummaryPill: React.FC<SummaryPillProps> = ({
             <span>{activeProvidersCount}/3</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
           </div>
+          <div className="text-[9px] font-mono text-emerald-400/80 mt-0.5">
+            Ready
+          </div>
         </div>
 
         {/* Metric 3: Last Synced Time */}
@@ -72,9 +92,11 @@ export const SummaryPill: React.FC<SummaryPillProps> = ({
           <div className="font-mono text-[11px] font-semibold text-sky-300 mt-0.5">
             {formatAgo()}
           </div>
+          <div className="text-[9px] font-mono text-slate-500 mt-0.5">
+            {isWatcherActive ? 'Auto' : 'Manual'}
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
